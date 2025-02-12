@@ -51,14 +51,34 @@
         opacity: 0;
         transition: opacity 0.5s;
       }
+      .mobile-controls {
+        display: none;
+      }
+
+      @media (hover: none) and (pointer: coarse) {
+        .desktop-controls {
+          display: none;
+        }
+        .mobile-controls {
+          display: block;
+        }
+      }
     </style>
   </head>
   <body>
     <div id="instructions">
-      Move mouse to steer<br />
-      Scroll to adjust speed<br />
-      SPACE to toggle hyperdrive<br />
-      M to toggle music
+      <span class="desktop-controls">
+        Move mouse to steer<br />
+        Scroll to adjust speed<br />
+        SPACE to toggle hyperdrive<br />
+        M to toggle music
+      </span>
+      <span class="mobile-controls">
+        Drag to steer<br />
+        Pinch to adjust speed<br />
+        Double tap for hyperdrive<br />
+        Long press for music
+      </span>
     </div>
     <div id="speedometer">Speed: 1.0x</div>
     <div class="vignette"></div>
@@ -292,6 +312,104 @@
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth, window.innerHeight);
+      });
+
+      // Mobile touch controls
+      let touchStartX = 0;
+      let touchStartY = 0;
+      let isTouching = false;
+
+      document.addEventListener("touchstart", (event) => {
+        touchStartX = event.touches[0].clientX;
+        touchStartY = event.touches[0].clientY;
+        isTouching = true;
+      });
+
+      document.addEventListener(
+        "touchmove",
+        (event) => {
+          if (isTouching) {
+            event.preventDefault();
+            const touchX = event.touches[0].clientX;
+            const touchY = event.touches[0].clientY;
+
+            targetX = (touchX - window.innerWidth / 2) * 0.001;
+            targetY = (touchY - window.innerHeight / 2) * 0.001;
+          }
+        },
+        { passive: false }
+      );
+
+      document.addEventListener("touchend", () => {
+        isTouching = false;
+      });
+
+      // Add double tap for hyperdrive
+      let lastTap = 0;
+      document.addEventListener("touchend", (event) => {
+        const currentTime = new Date().getTime();
+        const tapLength = currentTime - lastTap;
+        if (tapLength < 500 && tapLength > 0) {
+          isHyperdrive = !isHyperdrive;
+          if (isHyperdrive) {
+            document.querySelector(".vignette").style.opacity = "1";
+            document.getElementById("speedometer").textContent =
+              "HYPERDRIVE ENGAGED";
+          } else {
+            document.querySelector(".vignette").style.opacity = "0";
+            document.getElementById(
+              "speedometer"
+            ).textContent = `Speed: ${speed.toFixed(1)}x`;
+          }
+        }
+        lastTap = currentTime;
+      });
+
+      // Add two-finger pinch for speed control
+      let initialPinchDistance = 0;
+
+      document.addEventListener("touchstart", (event) => {
+        if (event.touches.length === 2) {
+          initialPinchDistance = Math.hypot(
+            event.touches[0].clientX - event.touches[1].clientX,
+            event.touches[0].clientY - event.touches[1].clientY
+          );
+        }
+      });
+
+      document.addEventListener("touchmove", (event) => {
+        if (event.touches.length === 2 && !isHyperdrive) {
+          const currentDistance = Math.hypot(
+            event.touches[0].clientX - event.touches[1].clientX,
+            event.touches[0].clientY - event.touches[1].clientY
+          );
+
+          const pinchDelta = (currentDistance - initialPinchDistance) * 0.01;
+          speed = Math.max(0.5, Math.min(3, speed + pinchDelta));
+          document.getElementById(
+            "speedometer"
+          ).textContent = `Speed: ${speed.toFixed(1)}x`;
+
+          initialPinchDistance = currentDistance;
+        }
+      });
+
+      let longPressTimer;
+
+      document.addEventListener("touchstart", () => {
+        longPressTimer = setTimeout(() => {
+          if (!isMusicPlaying) {
+            backgroundMusic.play();
+            isMusicPlaying = true;
+          } else {
+            backgroundMusic.pause();
+            isMusicPlaying = false;
+          }
+        }, 800);
+      });
+
+      document.addEventListener("touchend", () => {
+        clearTimeout(longPressTimer);
       });
 
       const clock = new THREE.Clock();
