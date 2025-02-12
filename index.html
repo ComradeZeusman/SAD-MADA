@@ -24,7 +24,9 @@
         border-radius: 8px;
         pointer-events: none;
         transition: opacity 0.5s;
+        font-size: 16px; /* Base font size */
       }
+
       #speedometer {
         position: absolute;
         bottom: 20px;
@@ -35,6 +37,7 @@
         padding: 15px;
         border-radius: 8px;
         pointer-events: none;
+        font-size: 16px; /* Base font size */
       }
       .vignette {
         position: fixed;
@@ -63,6 +66,34 @@
           display: block;
         }
       }
+      @media (max-width: 768px), (hover: none) and (pointer: coarse) {
+        #instructions {
+          font-size: 24px;
+          padding: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          width: 80%;
+          text-align: center;
+        }
+
+        #speedometer {
+          font-size: 24px;
+          padding: 20px;
+          left: 50%;
+          transform: translateX(-50%);
+          bottom: 40px;
+          width: 80%;
+          text-align: center;
+        }
+
+        .mobile-controls {
+          font-size: 24px;
+          line-height: 1.5;
+        }
+        .mobile-device {
+          display: none;
+        }
+      }
     </style>
   </head>
   <body>
@@ -89,6 +120,9 @@
     <script>
       const backgroundMusic = document.getElementById("backgroundMusic");
       let isMusicPlaying = false;
+      const isMobile = window.matchMedia(
+        "(max-width: 768px), (hover: none) and (pointer: coarse)"
+      ).matches;
 
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(
@@ -112,7 +146,8 @@
         starPositions[i] = THREE.Math.randFloatSpread(2000);
         starPositions[i + 1] = THREE.Math.randFloatSpread(2000);
         starPositions[i + 2] = THREE.Math.randFloatSpread(2000);
-        starSizes[i / 3] = Math.random() * 0.2 + 0.1;
+        starSizes[i / 3] =
+          Math.random() * (isMobile ? 1.2 : 0.2) + (isMobile ? 0.6 : 0.1);
       }
 
       const starGeometry = new THREE.BufferGeometry();
@@ -140,9 +175,11 @@
             vec4 mvPosition = modelViewMatrix * vec4(position, 1.0);
             vDistance = -mvPosition.z;
             float hyperdriveStretch = 1.0 + hyperdriveEffect * (vDistance * 0.01);
-            gl_PointSize = size * hyperdriveStretch * (300.0 / -mvPosition.z);
+            gl_PointSize = size * hyperdriveStretch * (${
+              isMobile ? "900.0" : "300.0"
+            } / -mvPosition.z);
             gl_Position = projectionMatrix * mvPosition;
-          }
+        }
         `,
         fragmentShader: `
           varying float vDistance;
@@ -187,7 +224,8 @@
           nebulaPositions[j] = THREE.Math.randFloatSpread(400) + i * 200;
           nebulaPositions[j + 1] = THREE.Math.randFloatSpread(400);
           nebulaPositions[j + 2] = THREE.Math.randFloatSpread(400) - 500;
-          nebulaSizes[j / 3] = Math.random() * 2 + 1;
+          nebulaSizes[j / 3] =
+            Math.random() * (isMobile ? 6 : 2) + (isMobile ? 3 : 1);
         }
 
         const nebulaGeometry = new THREE.BufferGeometry();
