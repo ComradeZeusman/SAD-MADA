@@ -57,12 +57,19 @@
     <div id="instructions">
       Move mouse to steer<br />
       Scroll to adjust speed<br />
-      SPACE to toggle hyperdrive
+      SPACE to toggle hyperdrive<br />
+      M to toggle music
     </div>
     <div id="speedometer">Speed: 1.0x</div>
     <div class="vignette"></div>
+    <audio id="backgroundMusic" loop>
+      <source src="sad1.mp3" type="audio/mp3" />
+    </audio>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script>
+      const backgroundMusic = document.getElementById("backgroundMusic");
+      let isMusicPlaying = false;
+
       const scene = new THREE.Scene();
       const camera = new THREE.PerspectiveCamera(
         75,
@@ -269,7 +276,17 @@
           }
         }
       });
-
+      document.addEventListener("keydown", (event) => {
+        if (event.code === "KeyM") {
+          if (!isMusicPlaying) {
+            backgroundMusic.play();
+            isMusicPlaying = true;
+          } else {
+            backgroundMusic.pause();
+            isMusicPlaying = false;
+          }
+        }
+      });
       // Window resize handler
       window.addEventListener("resize", () => {
         camera.aspect = window.innerWidth / window.innerHeight;
